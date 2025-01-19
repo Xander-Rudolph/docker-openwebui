@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  stable-diffusion-webui:
+    build: .
+    container_name: stable-diffusion-webui
+    ports:
+      - "${SD_WEBUI_PORT}:7860"
+    environment:
+      - COMMANDLINE_ARGS=--medvram --xformers --enable-insecure-extension-access
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+    volumes:
+      - sd_models:/models
+      - sd_config:/config
+      - sd_outputs:/outputs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    restart: always
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "${OPEN_WEBUI_PORT}:8080"
+    environment:
+      - AUTOMATIC1111_BASE_URL=http://stable-diffusion-webui:${SD_WEBUI_PORT}/
+      - ENABLE_IMAGE_GENERATION=True
+      - OLLAMA_BASE_URL=http://ollama:${OLLAMA_PORT}
+    volumes:
+      - owui_data:/app/backend/data
+    restart: always
+    depends_on:
+      - stable-diffusion-webui
+      - ollama
+
+volumes:
+  sd_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_MODELS_DIR}"
+  sd_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_CONFIG_DIR}"
+  sd_outputs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_OUTPUTS_DIR}"
+  sd_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_DATA_DIR}"
+  ollama_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${LAMA_DATA_DIR}"
+  owui_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${OWUI_DATA_DIR}"
