@@ -16,10 +16,22 @@ jobs:
   review:
     if: ${{ github.event_name == 'pull_request' }}
     uses: xander-rudolph/.github/.github/workflows/ollama-pr.yml@main
+    
+  trivy-scan:
+    if: ${{ github.event_name == 'pull_request' }}
+    name: Trivy Scan Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Trivy Scan
+        uses: Xander-Rudolph/trivy-scan@main
+        with:
+          severity: "HIGH,CRITICAL"
 
   docker-build:
     if: ${{ github.event_name != 'pull_request' }}
-    uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
+    uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@debug
+    # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
     strategy:
       matrix:
         image: ['stable-diffusion']
