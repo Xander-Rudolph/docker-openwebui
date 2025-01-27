@@ -28,5 +28,3 @@ jobs:
       working_dir: ${{ matrix.image }}
       gitversion: "gitversion.yml"
       trigger_release: ${{ github.ref_name == 'main' }}
-    secrets: 
-      GH_PACKAGETOKEN: ${{ secrets.GITHUB_TOKEN }}
