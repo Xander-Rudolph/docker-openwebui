@@ -3,7 +3,8 @@ version: '3.8'
 services:
   stable-diffusion-webui:
     # If you want to run a build instead of pulling the image
-    build: ./stable-diffusion
+    # build: ./stable-diffusion
+    image: ghcr.io/xander-rudolph/stable-diffusion:latest
     container_name: stable-diffusion-webui
     ports:
       - "${SD_WEBUI_PORT}:7860"
@@ -22,7 +23,7 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-
+  
   ollama:
     image: ollama/ollama
     container_name: ollama
@@ -41,6 +42,21 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
+  # Modified from 
+  # https://tech-undocs.info/ollama/run-with-docker
+  # for the AMD version
+  # ollama:
+  #   image: ollama/ollama:rocm
+  #   container_name: ollama
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   ports:
+  #     - "${OLLAMA_PORT}:11434"
+  #   restart: always    
+  #   devices:
+  #     - /dev/kfd
+  #     - /dev/dri
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
