@@ -19,7 +19,8 @@ jobs:
 
   docker-build:
     if: ${{ github.event_name != 'pull_request' }}
-    uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
+    uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@debug
+    # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
     strategy:
       matrix:
         image: ['stable-diffusion']
