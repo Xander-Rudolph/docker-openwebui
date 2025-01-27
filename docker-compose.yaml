@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   stable-diffusion-webui:
-    build: .
+    # If you want to run a build instead of pulling the image
+    build: ./stable-diffusion
     container_name: stable-diffusion-webui
     ports:
       - "${SD_WEBUI_PORT}:7860"
@@ -50,12 +51,65 @@ services:
       - AUTOMATIC1111_BASE_URL=http://stable-diffusion-webui:${SD_WEBUI_PORT}/
       - ENABLE_IMAGE_GENERATION=True
       - OLLAMA_BASE_URL=http://ollama:${OLLAMA_PORT}
+      - ENABLE_RAG_WEB_SEARCH=${ENABLE_RAG_WEB_SEARCH}
+      - RAG_WEB_SEARCH_ENGINE=${RAG_WEB_SEARCH_ENGINE}
+      - RAG_WEB_SEARCH_RESULT_COUNT=${RAG_WEB_SEARCH_RESULT_COUNT}
+      - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=${RAG_WEB_SEARCH_CONCURRENT_REQUESTS}
+      - SEARXNG_QUERY_URL=${SEARXNG_QUERY_URL}
     volumes:
       - owui_data:/app/backend/data
     restart: always
     depends_on:
       - stable-diffusion-webui
       - ollama
+
+  # tts-piper:
+  #   image: ghcr.io/rhasspy/piper:latest
+  #   container_name: tts-piper
+  #   ports:
+  #     - "${PIPER_PORT}:59125"
+  #   environment:
+  #     - PIPER_MODEL_DIR=/models
+  #   volumes:
+  #     - tts_models:/models
+  #   restart: always
+
+  # stt-fasterwhisper:
+  #   image: linuxserver/faster-whisper
+  #   container_name: tts-fasterwhisper
+  #   ports:
+  #     - "${FASTERWHISPER_PORT}:5001"  
+  #   environment:
+  #     - CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+  #     - WHISPER_MODEL=${WHISPER_MODEL}
+  #     - WHISPER_BEAM=${WHISPER_BEAM}
+  #     - WHISPER_LANG=${WHISPER_LANG}
+  #   volumes:
+  #     - stt_models:/models
+  #   restart: always
+
+  searxng:
+    container_name: searxng
+    image: searxng/searxng:latest
+    ports:
+      - "${SEARXNG_PORT}:8888"  
+    volumes:
+      - search:/etc/searxng:rw
+    env_file:
+      - .env
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
 
 volumes:
   sd_models:
@@ -76,6 +130,24 @@ volumes:
       type: none
       o: bind
       device: "${SD_OUTPUTS_DIR}"
+  tts_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${TTS_MODELS}"
+  stt_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${STT_MODELS}"
+  search:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SEARCH_DIR}"
   sd_data:
     driver: local
     driver_opts:

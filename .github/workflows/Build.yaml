@@ -1,0 +1,32 @@
+name: Build Docker images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  pull-requests: write
+  contents: write
+  packages: write
+  
+jobs:
+  review:
+    if: ${{ github.event_name == 'pull_request' }}
+    uses: xander-rudolph/.github/.github/workflows/ollama-pr.yml@main
+
+  docker-build:
+    if: ${{ github.event_name != 'pull_request' }}
+    uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
+    strategy:
+      matrix:
+        image: ['stable-diffusion']
+    with:
+      image_name: ${{ matrix.image }}
+      working_dir: ${{ matrix.image }}
+      gitversion: "gitversion.yml"
+      trigger_release: ${{ github.ref_name == 'main' }}
+    secrets: 
+      GH_PACKAGETOKEN: ${{ secrets.GITHUB_TOKEN }}

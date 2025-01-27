@@ -50,6 +50,22 @@ The `stable-diffusion/AUTOMATIC1111` is quite large, and I suspect the limitatio
 SD_WEBUI_PORT=7860
 OPEN_WEBUI_PORT=8080
 OLLAMA_PORT=11434
+SEARXNG_PORT=8888
+PIPER_PORT=59125
+FASTERWHISPER_PORT=5001
+
+# Search stuff
+ENABLE_RAG_WEB_SEARCH= True
+RAG_WEB_SEARCH_ENGINE= "searxng"
+RAG_WEB_SEARCH_RESULT_COUNT= 3
+RAG_WEB_SEARCH_CONCURRENT_REQUESTS= 10
+SEARXNG_HOSTNAME=localhost:8888/
+SEARXNG_QUERY_URL= "http://searxng:8888/search?q=<query>"
+
+# STT Stuff
+WHISPER_MODEL=tiny-int8
+WHISPER_BEAM=1
+WHISPER_LANG=en
 
 # GPU Configuration
 NVIDIA_VISIBLE_DEVICES=all
@@ -63,6 +79,9 @@ SD_CONFIG_DIR=${BASE_DIR}/stablediffusion/config
 SD_OUTPUTS_DIR=${BASE_DIR}/stablediffusion/outputs
 LAMA_DATA_DIR=${BASE_DIR}/ollama-data
 OWUI_DATA_DIR=${BASE_DIR}/openwebui-data
+TTS_MODELS=${BASE_DIR}/tts/models
+STT_MODELS=${BASE_DIR}/stt/models
+SEARCH_DIR=${BASE_DIR}/searxng
 ```
 
 2. Run the following command
@@ -111,3 +130,13 @@ sequenceDiagram
 ## Contributing
 
 Contributions are always welcome! If you would like to contribute, please fork this repository, make your changes, and submit a pull request.
+
+## What still needs to be done:
+[ ] Test - search
+[ ] Update openweb for search params
+[ ] Test - TTS
+[ ] Update openweb for TTS
+[ ] Test - STT
+[ ] Update openweb for STT (right now its usuing built in whisper)
+[ ] Update openweb for image generation
+[ ] Research Video models
