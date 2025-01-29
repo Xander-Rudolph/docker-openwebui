@@ -78,31 +78,7 @@ services:
     depends_on:
       - stable-diffusion-webui
       - ollama
-
-  # tts-piper:
-  #   image: ghcr.io/rhasspy/piper:latest
-  #   container_name: tts-piper
-  #   ports:
-  #     - "${PIPER_PORT}:59125"
-  #   environment:
-  #     - PIPER_MODEL_DIR=/models
-  #   volumes:
-  #     - tts_models:/models
-  #   restart: always
-
-  # stt-fasterwhisper:
-  #   image: linuxserver/faster-whisper
-  #   container_name: tts-fasterwhisper
-  #   ports:
-  #     - "${FASTERWHISPER_PORT}:5001"  
-  #   environment:
-  #     - CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
-  #     - WHISPER_MODEL=${WHISPER_MODEL}
-  #     - WHISPER_BEAM=${WHISPER_BEAM}
-  #     - WHISPER_LANG=${WHISPER_LANG}
-  #   volumes:
-  #     - stt_models:/models
-  #   restart: always
+      - searxng
 
   searxng:
     container_name: searxng
