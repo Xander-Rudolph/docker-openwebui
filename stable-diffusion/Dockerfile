@@ -1,5 +1,5 @@
 # Use the official NVIDIA PyTorch container as a base image
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu20.04
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu20.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
