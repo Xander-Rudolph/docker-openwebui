@@ -1,7 +1,10 @@
 version: '3.8'
 
 services:
-  stable-diffusion-webui:
+  stable-diffusion-webui-nvid:
+    profiles:
+      - NVIDIA
+      - default
     # If you want to run a build instead of pulling the image
     # build: ./stable-diffusion
     image: ghcr.io/xander-rudolph/stable-diffusion:latest
@@ -10,8 +13,8 @@ services:
       - "${SD_WEBUI_PORT}:7860"
     environment:
       - COMMANDLINE_ARGS=--medvram --xformers --enable-insecure-extension-access
-      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
-      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
     volumes:
       - sd_models:/models
       - sd_config:/config
@@ -24,7 +27,9 @@ services:
               count: all
               capabilities: [gpu]
   
-  ollama:
+  ollama-nvid:
+    profiles:
+      - NVIDIA
     image: ollama/ollama
     container_name: ollama
     volumes:
@@ -43,22 +48,25 @@ services:
               count: all
               capabilities: [gpu]
 
-  # Modified from 
-  # https://tech-undocs.info/ollama/run-with-docker
-  # for the AMD version
-  # ollama:
-  #   image: ollama/ollama:rocm
-  #   container_name: ollama
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   ports:
-  #     - "${OLLAMA_PORT}:11434"
-  #   restart: always    
-  #   devices:
-  #     - /dev/kfd
-  #     - /dev/dri
+  ollama-rocm:
+    profiles:
+      - AMD
+    image: ollama/ollama:rocm
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    restart: always    
+    devices:
+      - /dev/kfd
+      - /dev/dri
 
   open-webui:
+    profiles:
+      - AMD
+      - NVIDIA
+      - default
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
     ports:
@@ -66,42 +74,44 @@ services:
     environment:
       - AUTOMATIC1111_BASE_URL=http://stable-diffusion-webui:${SD_WEBUI_PORT}/
       - ENABLE_IMAGE_GENERATION=True
-      - OLLAMA_BASE_URL=http://ollama:${OLLAMA_PORT}
-      - ENABLE_RAG_WEB_SEARCH=${ENABLE_RAG_WEB_SEARCH}
-      - RAG_WEB_SEARCH_ENGINE=${RAG_WEB_SEARCH_ENGINE}
-      - RAG_WEB_SEARCH_RESULT_COUNT=${RAG_WEB_SEARCH_RESULT_COUNT}
-      - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=${RAG_WEB_SEARCH_CONCURRENT_REQUESTS}
-      - SEARXNG_QUERY_URL=${SEARXNG_QUERY_URL}
+      - OLLAMA_BASE_URL=http://${OLLAMA_HOST:-ollama}:${OLLAMA_PORT}
+      - ENABLE_RAG_WEB_SEARCH=${ENABLE_RAG_WEB_SEARCH:-True}
+      - RAG_WEB_SEARCH_ENGINE=${RAG_WEB_SEARCH_ENGINE:-searxng}
+      - RAG_WEB_SEARCH_RESULT_COUNT=${RAG_WEB_SEARCH_RESULT_COUNT:-3}
+      - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=${RAG_WEB_SEARCH_CONCURRENT_REQUESTS:-30}
+      - SEARXNG_QUERY_URL="http://${SEARXNG_HOSTNAME:-searxng}:${SEARXNG_PORT:-8888}/search?q="
     volumes:
       - owui_data:/app/backend/data
     restart: always
-    depends_on:
-      - stable-diffusion-webui
-      - ollama
-      - searxng
 
   searxng:
+    profiles:
+      - AMD
+      - NVIDIA
+      - default
     container_name: searxng
     image: searxng/searxng:latest
     ports:
-      - "${SEARXNG_PORT}:8888"  
+      - "${SEARXNG_PORT}:8080"  
     volumes:
       - search:/etc/searxng:rw
-    env_file:
-      - .env
-    restart: unless-stopped
+    environment:
+      - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
+      - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
     cap_drop:
       - ALL
     cap_add:
       - CHOWN
       - SETGID
       - SETUID
-      - DAC_OVERRIDE
     logging:
       driver: "json-file"
       options:
         max-size: "1m"
         max-file: "1"
+    depends_on:
+      - open-webui
 
 volumes:
   sd_models:

@@ -15,6 +15,23 @@ The Dockerfile used in this repository sets up an environment with Python 3.10, 
 
 The docker-compose file allows for easy management of multiple services, including the Stable Diffusion WebUI, model service, and necessary volumes for storing data.
 
+## Switching profiles
+
+The docker compose file is set to handle 3 profiles:
+- default (no gpu pods)
+- NVIDIA
+- AMD
+
+Specify the --profile to ensure the appropriate pods start:
+```
+docker compose --profile default up -d
+```
+
+to spool down
+```
+docker compose --profile default down
+```
+
 ## Updating the Repository
 
 If updates to the repositories are made, you can rebuild the Docker image by running:
@@ -24,6 +41,7 @@ docker build -t stable-diffusion .
 
 ### About the Dockerfile
 The `stable-diffusion/AUTOMATIC1111` is quite large, and I suspect the limitations around image size are why I can't find any of the old docker images I use to use. To address this issue, I have created a Docker image based on a recent CUDA base image. Building this image may take several minutes (5+ minutes).
+
 ### Only stable-diffusion
 
 1. Build the Docker image by running the following command in a terminal:
