@@ -1,10 +1,7 @@
-version: '3.8'
-
 services:
   stable-diffusion-webui-nvid:
     profiles:
       - NVIDIA
-      - default
     # If you want to run a build instead of pulling the image
     # build: ./stable-diffusion
     image: ghcr.io/xander-rudolph/stable-diffusion:latest
@@ -38,8 +35,8 @@ services:
       - "${OLLAMA_PORT}:11434"
     restart: always
     environment:
-      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
-      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
     deploy:
       resources:
         reservations:
@@ -79,7 +76,7 @@ services:
       - RAG_WEB_SEARCH_ENGINE=${RAG_WEB_SEARCH_ENGINE:-searxng}
       - RAG_WEB_SEARCH_RESULT_COUNT=${RAG_WEB_SEARCH_RESULT_COUNT:-3}
       - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=${RAG_WEB_SEARCH_CONCURRENT_REQUESTS:-30}
-      - SEARXNG_QUERY_URL="http://${SEARXNG_HOSTNAME:-searxng}:${SEARXNG_PORT:-8888}/search?q="
+      - SEARXNG_QUERY_URL=http://${SEARXNG_HOSTNAME:-searxng}:${SEARXNG_PORT:-8080}/search?q=<query>
     volumes:
       - owui_data:/app/backend/data
     restart: always
@@ -92,13 +89,14 @@ services:
     container_name: searxng
     image: searxng/searxng:latest
     ports:
-      - "${SEARXNG_PORT}:8080"  
+      - "${SEARXNG_PORT:-8080}:8080"  
     volumes:
       - search:/etc/searxng:rw
     environment:
       - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
       - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
       - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
+      - TRUSTED_NETWORKS="10.0.0.0/8,192.168.0.0/16"
     cap_drop:
       - ALL
     cap_add:
