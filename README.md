@@ -64,32 +64,22 @@ The `stable-diffusion/AUTOMATIC1111` is quite large, and I suspect the limitatio
 1. Create a file named `.env` next to the `docker-compose` file and add the following content:
 
 ```markdown
-# Ports
+# Any variables that are commented out are defaulted and do not need to be defined
+# -------------
+# Ports stuff
+# -------------
+OPEN_WEBUI_PORT=8081
+SEARXNG_PORT=8080
 SD_WEBUI_PORT=7860
-OPEN_WEBUI_PORT=8080
 OLLAMA_PORT=11434
-SEARXNG_PORT=8888
 PIPER_PORT=59125
 FASTERWHISPER_PORT=5001
+# if you are using ollama in the cluster, ensure you use the --profile arg in your docker compose to use NVIDIA or AMD
+# OLLAMA_HOST=localhost
 
-# Search stuff
-ENABLE_RAG_WEB_SEARCH= True
-RAG_WEB_SEARCH_ENGINE= "searxng"
-RAG_WEB_SEARCH_RESULT_COUNT= 3
-RAG_WEB_SEARCH_CONCURRENT_REQUESTS= 10
-SEARXNG_HOSTNAME=localhost:8888/
-SEARXNG_QUERY_URL= "http://searxng:8888/search?q=<query>"
-
-# STT Stuff
-WHISPER_MODEL=tiny-int8
-WHISPER_BEAM=1
-WHISPER_LANG=en
-
-# GPU Configuration
-NVIDIA_VISIBLE_DEVICES=all
-NVIDIA_DRIVER_CAPABILITIES=compute,utility
-
-# Volume Directories (adjust paths to your system)
+# -------------
+# Data storage
+# -------------
 BASE_DIR=${USERPROFILE}/openweb-complete
 SD_DATA_DIR=${BASE_DIR}/stablediffusion/data
 SD_MODELS_DIR=${BASE_DIR}/stablediffusion/models
@@ -100,6 +90,24 @@ OWUI_DATA_DIR=${BASE_DIR}/openwebui-data
 TTS_MODELS=${BASE_DIR}/tts/models
 STT_MODELS=${BASE_DIR}/stt/models
 SEARCH_DIR=${BASE_DIR}/searxng
+
+# -------------
+# GPU stuff
+# -------------
+# NVIDIA_VISIBLE_DEVICES=all
+# NVIDIA_DRIVER_CAPABILITIES=compute,utility
+# OLLAMA_IMAGE=ollama/ollama #nvidia
+
+# -------------
+# Search stuff
+# -------------
+# ENABLE_RAG_WEB_SEARCH= True
+# RAG_WEB_SEARCH_ENGINE= searxng
+# RAG_WEB_SEARCH_RESULT_COUNT= 3
+# RAG_WEB_SEARCH_CONCURRENT_REQUESTS= 10
+# SEARXNG_HOSTNAME=localhost 
+# UWSGI_WORKERS= 4
+# UWSGI_THREADS= 4
 ```
 
 2. Run the following command

@@ -96,7 +96,8 @@ services:
       - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
       - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
       - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
-      - TRUSTED_NETWORKS="10.0.0.0/8,192.168.0.0/16"
+      - TRUSTED_NETWORKS="10.0.0.0/8,192.168.0.0/16" # allow calls from most A and C networks
+      - SEARXNG_API__REQUIRE_API_KEY=False # disable API key requirement
     cap_drop:
       - ALL
     cap_add:
