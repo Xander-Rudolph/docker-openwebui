@@ -1,23 +1,31 @@
 target "docker-metadata-action" {}
 
-variable "IMAGE_NAME" {
-  default = "ghcr.io/xander-rudolph/stable-diffusion"
+variable "REPO_NAME" {
+  default = "ghcr.io/xander-rudolph"
+}
+
+variable "SD_IMAGE_NAME" {
+  default = "stable-diffusion"
+}
+
+variable "SEARXNG_IMAGE_NAME" {
+  default = "stable-diffusion"
 }
 
 group "default" {
-  targets = ["multi-tagged"]
+  targets = ["multi-tagged","searxng"]
 }
 
 target "base" {
   inherits = ["docker-metadata-action"]
   context    = "stable-diffusion"
-  tags     = ["${IMAGE_NAME}:latest"]
+  tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:latest"]
   dockerfile = "Dockerfile"
 }
 
 target "ext-tagged" {
   inherits = ["base"]
-  tags     = ["${IMAGE_NAME}:ext"]
+  tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:ext"]
   args     = {
     addextensions = "true"
   }
@@ -25,7 +33,7 @@ target "ext-tagged" {
 
 target "mdl-tagged" {
   inherits = ["base"]
-  tags     = ["${IMAGE_NAME}:mdl"]
+  tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:mdl"]
   args     = {
     addmodels     = "true"
   }
@@ -33,5 +41,12 @@ target "mdl-tagged" {
 
 target "multi-tagged" {
   inherits = ["ext-tagged","mdl-tagged"]
-  tags     = ["${IMAGE_NAME}:ext-mdl"]
+  tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:ext-mdl"]
+}
+
+target "searxng" {
+  inherits = ["docker-metadata-action"]
+  context    = "searxng"
+  tags     = ["${REPO_NAME}/${SEARXNG_IMAGE_NAME}:latest"]
+  dockerfile = "Dockerfile"
 }

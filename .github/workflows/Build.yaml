@@ -35,7 +35,7 @@ jobs:
     uses: xander-rudolph/.github/.github/workflows/docker-bake.yml@test
     strategy:
       matrix:
-        image: ['stable-diffusion']
+        image: ['stable-diffusion','searxng']
     with:
       image_name: ${{ matrix.image }}
       working_dir: ${{ matrix.image }}
