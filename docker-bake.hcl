@@ -6,7 +6,7 @@ group "default" {
 
 target "base" {
   inherits = ["docker-metadata-action"]
-  context    = "."
+  context    = "stable-diffusion"
   dockerfile = "Dockerfile"
   tags       = ["latest"]
 }
