@@ -33,11 +33,7 @@ jobs:
     # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@debug
     # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
     uses: xander-rudolph/.github/.github/workflows/docker-bake.yml@test
-    strategy:
-      matrix:
-        image: ['stable-diffusion','searxng']
     with:
-      image_name: ${{ matrix.image }}
-      working_dir: ${{ matrix.image }}
       gitversion: "gitversion.yml"
-      trigger_release: ${{ github.ref_name == 'main' }}
+      trigger_release: true
+      # trigger_release: ${{ github.ref_name == 'main' }}

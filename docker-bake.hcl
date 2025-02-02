@@ -19,7 +19,10 @@ group "default" {
 target "base" {
   inherits = ["docker-metadata-action"]
   context    = "stable-diffusion"
-  tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:latest"]
+  tags     = [
+    "${REPO_NAME}/${SD_IMAGE_NAME}:latest"
+    "${REPO_NAME}/${SD_IMAGE_NAME}:${BUILD_VERSION}"
+  ]
   dockerfile = "Dockerfile"
 }
 
