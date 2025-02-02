@@ -9,7 +9,7 @@ variable "SD_IMAGE_NAME" {
 }
 
 variable "SEARXNG_IMAGE_NAME" {
-  default = "stable-diffusion"
+  default = "searxng"
 }
 
 group "default" {
