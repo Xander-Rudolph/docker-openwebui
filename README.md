@@ -39,6 +39,11 @@ If updates to the repositories are made, you can rebuild the Docker image by run
 docker build -t stable-diffusion .
 ```
 
+If you want to enable added models and/or extensions, use the following:
+```
+docker build --build-arg addmodels=true --build-arg addextensions=false -t stable-diffusion .
+```
+
 ### About the Dockerfile
 The `stable-diffusion/AUTOMATIC1111` is quite large, and I suspect the limitations around image size are why I can't find any of the old docker images I use to use. To address this issue, I have created a Docker image based on a recent CUDA base image. Building this image may take several minutes (5+ minutes).
 
@@ -68,12 +73,10 @@ The `stable-diffusion/AUTOMATIC1111` is quite large, and I suspect the limitatio
 # -------------
 # Ports stuff
 # -------------
-OPEN_WEBUI_PORT=8081
+OPEN_WEBUI_PORT=80
 SEARXNG_PORT=8080
 SD_WEBUI_PORT=7860
 OLLAMA_PORT=11434
-PIPER_PORT=59125
-FASTERWHISPER_PORT=5001
 # if you are using ollama in the cluster, ensure you use the --profile arg in your docker compose to use NVIDIA or AMD
 # OLLAMA_HOST=localhost
 
@@ -81,22 +84,11 @@ FASTERWHISPER_PORT=5001
 # Data storage
 # -------------
 BASE_DIR=${USERPROFILE}/openweb-complete
-SD_DATA_DIR=${BASE_DIR}/stablediffusion/data
 SD_MODELS_DIR=${BASE_DIR}/stablediffusion/models
-SD_CONFIG_DIR=${BASE_DIR}/stablediffusion/config
-SD_OUTPUTS_DIR=${BASE_DIR}/stablediffusion/outputs
+SD_OUTPUT_DIR=${BASE_DIR}/stablediffusion/outputs
 LAMA_DATA_DIR=${BASE_DIR}/ollama-data
 OWUI_DATA_DIR=${BASE_DIR}/openwebui-data
-TTS_MODELS=${BASE_DIR}/tts/models
-STT_MODELS=${BASE_DIR}/stt/models
 SEARCH_DIR=${BASE_DIR}/searxng
-
-# -------------
-# GPU stuff
-# -------------
-# NVIDIA_VISIBLE_DEVICES=all
-# NVIDIA_DRIVER_CAPABILITIES=compute,utility
-# OLLAMA_IMAGE=ollama/ollama #nvidia
 
 # -------------
 # Search stuff
@@ -109,13 +101,14 @@ SEARCH_DIR=${BASE_DIR}/searxng
 # UWSGI_WORKERS= 4
 # UWSGI_THREADS= 4
 ```
+2. Rename `docker-compose.yaml.example` to `docker-compose.yaml`
 
-2. Run the following command
+3. Run the following command
 ```bash
-docker-compose up -d
+docker-compose --profile default up -d
 ```
 
-This will create a folder called `openweb-complete` in your user directory and the required subfolders for each application. Feel free to customize this setup according to your preferences. The `docker-compose` file contains the hardcoded port numbers that the Docker images use, allowing you to map them as needed locally. Run:
+This will create a folder called `openweb-complete` in your user directory and the required subfolders for each application. Feel free to customize this setup according to your preferences. The `docker-compose` file contains the hardcoded port numbers that the Docker images use, allowing you to map them as needed locally.
 
 **Note:** If you just restarted ollama, it may take some time for the first model load before it starts responding. The first message always takes a while.
 
@@ -127,7 +120,7 @@ This will create a folder called `openweb-complete` in your user directory and t
 The images used in this setup are large, so keep that in mind:
 - ollama: 4.91GB
 - open-webui: 5.91GB
-- stable-diffusion: 13.29GB
+- stable-diffusion: 31.11GB
 
 Be prepared for your system to require a significant amount of free disk space and for your video card to experience strain during operation.
 
@@ -158,11 +151,9 @@ sequenceDiagram
 Contributions are always welcome! If you would like to contribute, please fork this repository, make your changes, and submit a pull request.
 
 ## What still needs to be done:
-[ ] Test - search
-[ ] Update openweb for search params
-[ ] Test - TTS
-[ ] Update openweb for TTS
-[ ] Test - STT
-[ ] Update openweb for STT (right now its usuing built in whisper)
-[ ] Update openweb for image generation
-[ ] Research Video models
+- [ ] Update openweb for TTS
+- [ ] Update openweb for STT (right now its usuing built in whisper)
+- [x] Update openweb for image generation
+- [ ] pass openweb default image params that match SD
+- [ ] test docker bake file
+- [ ] Research Video models

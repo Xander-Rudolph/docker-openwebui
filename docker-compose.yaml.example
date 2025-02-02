@@ -2,20 +2,23 @@ services:
   stable-diffusion-webui-nvid:
     profiles:
       - NVIDIA
-    # If you want to run a build instead of pulling the image
-    # build: ./stable-diffusion
+    # If you want to run a build instead of pulling the image:
+    # build:
+    #   context: ./stable-diffusion
+    #   dockerfile: Dockerfile
+    #   args:
+    #     addextensions: "true"  # Control whether extensions are cloned
+    #     addmodels: "true"       # Control whether models are downloaded
+    # OR after you have built
+    # image: docker-openwebui-stable-diffusion-webui-nvid:latest 
+    # OR so you don't have to build
     image: ghcr.io/xander-rudolph/stable-diffusion:latest
     container_name: stable-diffusion-webui
     ports:
       - "${SD_WEBUI_PORT}:7860"
-    environment:
-      - COMMANDLINE_ARGS=--medvram --xformers --enable-insecure-extension-access
-      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
-      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
     volumes:
-      - sd_models:/models
-      - sd_config:/config
-      - sd_outputs:/outputs
+      - sd_models:/data/models
+      - sd_output:/data/output
     deploy:
       resources:
         reservations:
@@ -76,7 +79,7 @@ services:
       - RAG_WEB_SEARCH_ENGINE=${RAG_WEB_SEARCH_ENGINE:-searxng}
       - RAG_WEB_SEARCH_RESULT_COUNT=${RAG_WEB_SEARCH_RESULT_COUNT:-3}
       - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=${RAG_WEB_SEARCH_CONCURRENT_REQUESTS:-30}
-      - SEARXNG_QUERY_URL=http://${SEARXNG_HOSTNAME:-searxng}:${SEARXNG_PORT:-8080}/search?q=<query>
+      - SEARXNG_QUERY_URL=http://${SEARXNG_HOSTNAME:-searxng}:${SEARXNG_PORT:-8080}/search?q=<query>&format=json
     volumes:
       - owui_data:/app/backend/data
     restart: always
@@ -89,6 +92,7 @@ services:
     container_name: searxng
     image: searxng/searxng:latest
     ports:
+      # NOTE: this should really be 8888 https://github.com/searxng/searxng/issues/4274
       - "${SEARXNG_PORT:-8080}:8080"  
     volumes:
       - search:/etc/searxng:rw
@@ -96,8 +100,16 @@ services:
       - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
       - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
       - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
-      - TRUSTED_NETWORKS="10.0.0.0/8,192.168.0.0/16" # allow calls from most A and C networks
-      - SEARXNG_API__REQUIRE_API_KEY=False # disable API key requirement
+      - TRUSTED_NETWORKS="10.0.0.0/8,192.168.0.0/16,127.0.0.1/8,172.16.0.0/14" # allow calls from most A and C networks as well as docker networks (172.16.0.0/14 → Covers 172.16.0.0 - 172.19.255.255)
+      - SEARXNG_DEBUG=true
+      - SEARXNG_API__ENABLED=true
+      - SEARXNG_API__REQUIRE_API_KEY=false
+      # this doesn't work but you need to set   
+      # formats:
+      # - html
+      # - json <--
+      #  Otherwise the requests will get rejected for queries to the pod... raised and rejected
+      # https://github.com/searxng/searxng/issues/4273
     cap_drop:
       - ALL
     cap_add:
@@ -113,48 +125,24 @@ services:
       - open-webui
 
 volumes:
-  sd_models:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: "${SD_MODELS_DIR}"
-  sd_config:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: "${SD_CONFIG_DIR}"
-  sd_outputs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: "${SD_OUTPUTS_DIR}"
-  tts_models:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: "${TTS_MODELS}"
-  stt_models:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: "${STT_MODELS}"
   search:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: "${SEARCH_DIR}"
-  sd_data:
+  sd_models:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: "${SD_DATA_DIR}"
+      device: "${SD_MODELS_DIR}"
+  sd_output:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_OUTPUT_DIR}"
   ollama_data:
     driver: local
     driver_opts:

@@ -1,8 +1,9 @@
+# Use the official NVIDIA CUDA container as a base image
 FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu20.04
 
 # Maintainer Information
-LABEL org.opencontainers.image.authors="Xander-Rudolph"
-LABEL org.opencontainers.image.contact="https://github.com/Xander-Rudolph"
+LABEL org.opencontainers.image.authors="Alex Rudolph <alex.rudolph.1987@gmail.com>"
+LABEL org.opencontainers.image.contact="alex.rudolph.1987@gmail.com"
 LABEL org.opencontainers.image.source="https://github.com/xander-rudolph/docker-openwebui"
 LABEL org.opencontainers.image.vendor="stable-diffusion"
 LABEL org.opencontainers.image.title="CUDA-enabled stable diffusion"
@@ -17,8 +18,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,utility \
     TORCH_CUDA_ARCH_LIST="7.5 8.0 8.6" \
-    FORCE_CUDA="1" \
-    COMMANDLINE_ARGS='--medvram --xformers --enable-insecure-extension-access'
+    FORCE_CUDA="1"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,53 +37,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Get the source
-RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /data
-
 # Set Python 3.10 as the default python3
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
 # Install PyTorch with CUDA support
 RUN pip3 install --no-cache-dir torch==2.1.2 torchvision==0.16.2 --extra-index-url https://download.pytorch.org/whl/cu121
 
-# Added to resolve ControlNet init warning
-RUN pip3 install --no-cache-dir insightface
-
-# Resolve dependency on extensions/openpose-editor/scripts/main.py
-RUN pip3 install --no-cache-dir basicsr
-
-WORKDIR /data
-
-# create the sub paths
-RUN mkdir -p \
-    models \ 
-    outputs \
-    logs \
-    repositories \ 
-    extensions \
+# Create a single /data directory and symlink necessary paths
+RUN mkdir -p /data \
+    && mkdir -p /data/models /data/outputs /data/logs \
+    && ln -s /data/models /usr/src/models \
+    && ln -s /data/outputs /usr/src/outputs \
+    && ln -s /data/logs /usr/src/logs \
     && chmod -R 777 /data
 
-# Add minimum reqiuirements to make it work
-RUN git clone https://github.com/Stability-AI/stablediffusion.git repositories/stable-diffusion-stability-ai
+# Set working directory
+WORKDIR /usr/src
 
-# Define build-time arguments
-ARG addextensions=false
-ARG addmodels=false
+# Clone the Stable Diffusion WebUI repository
+RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git .
 
-# Make them available as environment variables
-ENV ADD_EXTENSIONS=${addextensions}
-ENV ADD_MODELS=${addmodels}
-
-# Copy scripts for conditional execution
-ADD --chmod=755 ./clone_extensions.sh ./clone_extensions.sh
-ADD --chmod=755 ./download_models.sh ./download_models.sh
-
-# Run conditional scripts
-RUN ./clone_extensions.sh $ADD_EXTENSIONS && \
-    ./download_models.sh $ADD_MODELS 
+# Clone the stable-diffusion repository
+RUN git clone https://github.com/Stability-AI/stablediffusion.git ./repositories/stable-diffusion-stability-ai
 
 # Expose the default port for the WebUI
 EXPOSE 7860
 
-# Command to start the WebUI with NVIDIA GPU acceleration, and skip torch CUDA test, as well as enables API calls for open-webui
-ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api"]
+# Command to start the WebUI with NVIDIA GPU acceleration and skip torch CUDA test
+ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test"]
