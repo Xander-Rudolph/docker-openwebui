@@ -43,6 +43,10 @@ If you want to enable added models and/or extensions, use the following:
 ```
 docker build --build-arg addmodels=true --build-arg addextensions=false -t stable-diffusion .
 ```
+OR
+```
+docker buildx bake
+```
 
 ### About the Dockerfile
 The `stable-diffusion/AUTOMATIC1111` is quite large, and I suspect the limitations around image size are why I can't find any of the old docker images I use to use. To address this issue, I have created a Docker image based on a recent CUDA base image. Building this image may take several minutes (5+ minutes).

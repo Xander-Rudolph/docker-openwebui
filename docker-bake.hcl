@@ -1,37 +1,37 @@
 target "docker-metadata-action" {}
 
+variable "IMAGE_NAME" {
+  default = "ghcr.io/xander-rudolph/stable-diffusion"
+}
+
 group "default" {
-  targets = ["base", "ext", "mdl", "ext-mdl"]
+  targets = ["multi-tagged"]
 }
 
 target "base" {
   inherits = ["docker-metadata-action"]
   context    = "stable-diffusion"
+  tags     = ["${IMAGE_NAME}:latest"]
   dockerfile = "Dockerfile"
-  tags       = ["latest"]
 }
 
-target "ext" {
+target "ext-tagged" {
   inherits = ["base"]
-  tags     = ["ext"]
+  tags     = ["${IMAGE_NAME}:ext"]
   args     = {
     addextensions = "true"
   }
 }
 
-target "mdl" {
+target "mdl-tagged" {
   inherits = ["base"]
-  tags     = ["mdl"]
+  tags     = ["${IMAGE_NAME}:mdl"]
   args     = {
-    addmodels = "true"
-  }
-}
-
-target "ext-mdl" {
-  inherits = ["base"]
-  tags     = ["ext-mdl"]
-  args     = {
-    addextensions = "true"
     addmodels     = "true"
   }
+}
+
+target "multi-tagged" {
+  inherits = ["ext-tagged","mdl-tagged"]
+  tags     = ["${IMAGE_NAME}:ext-mdl"]
 }
