@@ -58,6 +58,11 @@ WORKDIR /data
 RUN mkdir -p \
     models \ 
     outputs \
+    outputs/extras-images \
+    outputs/img2img-grids \
+    outputs/img2img-images \
+    outputs/txt2img-grids \
+    outputs/txt2img-images \
     logs \
     repositories \ 
     extensions \

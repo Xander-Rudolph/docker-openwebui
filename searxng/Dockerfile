@@ -11,9 +11,11 @@ LABEL org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 LABEL org.opencontainers.image.base="searxng/searxng:latest"
 
 # Append - json after - html in the formats block safely
-RUN grep -q 'formats:' /etc/searxng/settings.yml && \
-    sed -i '/^[[:space:]]*- html/a\  - json' /etc/searxng/settings.yml || \
-    echo "formats block not found or already updated."
+# RUN grep -q 'formats:' /etc/searxng/settings.yml && \
+#     sed -i '/^[[:space:]]*- html/a\  - json' /etc/searxng/settings.yml || \
+#     echo "formats block not found or already updated."
+# This doesn't work either. I suspect it is because the file exists after startup
+# RUN grep -qx "    - json" /etc/searxngsettings.xml || sed -i '80i\    - json' /etc/searxng/settings.xml
 
 EXPOSE 8080
 

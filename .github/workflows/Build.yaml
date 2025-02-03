@@ -36,4 +36,5 @@ jobs:
     with:
       gitversion: "gitversion.yml"
       trigger_release: true
+      targets: base
       # trigger_release: ${{ github.ref_name == 'main' }}
