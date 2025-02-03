@@ -12,10 +12,6 @@ variable "SEARXNG_IMAGE_NAME" {
   default = "searxng"
 }
 
-variable "BUILD_VERSION" {
-  default = "0.0.1"
-}
-
 group "default" {
   targets = ["multi-tagged","searxng"]
 }
@@ -24,8 +20,8 @@ target "base" {
   inherits = ["docker-metadata-action"]
   context    = "stable-diffusion"
   tags     = [
-    "${REPO_NAME}/${SD_IMAGE_NAME}:latest",
-    "${REPO_NAME}/${SD_IMAGE_NAME}:${BUILD_VERSION}"
+    "${REPO_NAME}/${SD_IMAGE_NAME}:latest"
+    # "${REPO_NAME}/${SD_IMAGE_NAME}:${BUILD_VERSION}"
   ]
   dockerfile = "Dockerfile"
 }
