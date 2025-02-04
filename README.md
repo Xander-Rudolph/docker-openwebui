@@ -70,44 +70,9 @@ The `stable-diffusion/AUTOMATIC1111` is quite large, and I suspect the limitatio
 3. Open your web browser and visit `http://localhost:7860` to access the Stable Diffusion WebUI.
 
 ## Example usage
-1. Create a file named `.env` next to the `docker-compose` file and add the following content:
+1. Rename `example.env` and `exampledocker-compose.yaml` files and drop `example` from the name 
 
-```markdown
-# Any variables that are commented out are defaulted and do not need to be defined
-# -------------
-# Ports stuff
-# -------------
-OPEN_WEBUI_PORT=80
-SEARXNG_PORT=8080
-SD_WEBUI_PORT=7860
-OLLAMA_PORT=11434
-# if you are using ollama in the cluster, ensure you use the --profile arg in your docker compose to use NVIDIA or AMD
-# OLLAMA_HOST=localhost
-
-# -------------
-# Data storage
-# -------------
-BASE_DIR=${USERPROFILE}/openweb-complete
-SD_MODELS_DIR=${BASE_DIR}/stablediffusion/models
-SD_OUTPUT_DIR=${BASE_DIR}/stablediffusion/outputs
-LAMA_DATA_DIR=${BASE_DIR}/ollama-data
-OWUI_DATA_DIR=${BASE_DIR}/openwebui-data
-SEARCH_DIR=${BASE_DIR}/searxng
-
-# -------------
-# Search stuff
-# -------------
-# ENABLE_RAG_WEB_SEARCH= True
-# RAG_WEB_SEARCH_ENGINE= searxng
-# RAG_WEB_SEARCH_RESULT_COUNT= 3
-# RAG_WEB_SEARCH_CONCURRENT_REQUESTS= 10
-# SEARXNG_HOSTNAME=localhost 
-# UWSGI_WORKERS= 4
-# UWSGI_THREADS= 4
-```
-2. Rename `docker-compose.yaml.example` to `docker-compose.yaml`
-
-3. Run the following command
+2. Run the following command
 ```bash
 docker-compose --profile default up -d
 ```
