@@ -52,21 +52,13 @@ RUN pip3 install --no-cache-dir insightface
 # Resolve dependency on extensions/openpose-editor/scripts/main.py
 RUN pip3 install --no-cache-dir basicsr
 
-WORKDIR /data
+# make mounting dirs
+RUN mkdir -p /models /outputs && \
+    chmod -R 777 /models && \
+    chmod -R 777 /outputs
 
-# create the sub paths
-RUN mkdir -p \
-    models \ 
-    outputs \
-    outputs/extras-images \
-    outputs/img2img-grids \
-    outputs/img2img-images \
-    outputs/txt2img-grids \
-    outputs/txt2img-images \
-    logs \
-    repositories \ 
-    extensions \
-    && chmod -R 777 /data
+# set working process
+WORKDIR /data
 
 # Add minimum reqiuirements to make it work
 RUN git clone https://github.com/Stability-AI/stablediffusion.git repositories/stable-diffusion-stability-ai
@@ -82,9 +74,11 @@ ENV ADD_MODELS=${addmodels}
 ENV ADD_MODELS=${privatemodels}
 
 # Copy scripts for conditional execution
-ADD --chmod=755 ./clone_extensions.sh ./clone_extensions.sh
-ADD --chmod=755 ./download_models.sh ./download_models.sh
-ADD --chmod=755 ./private_models.sh ./private_models.sh
+# ADD --chmod=755 ./clone_extensions.sh ./clone_extensions.sh
+# ADD --chmod=755 ./download_models.sh ./download_models.sh
+# ADD --chmod=755 ./private_models.sh ./private_models.sh
+# Copy all scripts in for exec
+ADD --chmod=755 ./*.sh .
 
 # Run conditional scripts
 RUN ./clone_extensions.sh $ADD_EXTENSIONS && \
@@ -96,5 +90,5 @@ EXPOSE 7860
 
 # Command to start the WebUI with NVIDIA GPU acceleration, and skip torch CUDA test, as well as enables API calls for open-webui
 # https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/82a973c04367123ae98bd9abdf80d9eda9b910e2/modules/cmd_args.py#L26
-ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api", "--ckpt-dir", "/models/stable-diffusion"]
-# ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api", "--ckpt-dir", "/models/Stable-diffusion" "--lora-dir", "/models/lora/models", "--hypernetwork-dir", "/models/hypernetworks", "--embedding-dir", "/models/embeddings", "--vae-dir", "/models/vae", "--controlnet-dir", "/models/controlnet"]
+# ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api"]
+ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api", "--ckpt-dir", "/models/sd-ckpt"]
