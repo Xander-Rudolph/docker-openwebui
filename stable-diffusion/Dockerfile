@@ -74,21 +74,27 @@ RUN git clone https://github.com/Stability-AI/stablediffusion.git repositories/s
 # Define build-time arguments
 ARG addextensions=false
 ARG addmodels=false
+ARG privatemodels=false
 
 # Make them available as environment variables
 ENV ADD_EXTENSIONS=${addextensions}
 ENV ADD_MODELS=${addmodels}
+ENV ADD_MODELS=${privatemodels}
 
 # Copy scripts for conditional execution
 ADD --chmod=755 ./clone_extensions.sh ./clone_extensions.sh
 ADD --chmod=755 ./download_models.sh ./download_models.sh
+ADD --chmod=755 ./private_models.sh ./private_models.sh
 
 # Run conditional scripts
 RUN ./clone_extensions.sh $ADD_EXTENSIONS && \
-    ./download_models.sh $ADD_MODELS 
+    ./download_models.sh $ADD_MODELS && \
+    ./private_models.sh $PRIVATE_MODELS 
 
 # Expose the default port for the WebUI
 EXPOSE 7860
 
 # Command to start the WebUI with NVIDIA GPU acceleration, and skip torch CUDA test, as well as enables API calls for open-webui
-ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api"]
+# https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/82a973c04367123ae98bd9abdf80d9eda9b910e2/modules/cmd_args.py#L26
+ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api", "--ckpt-dir", "/models/stable-diffusion"]
+# ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api", "--ckpt-dir", "/models/Stable-diffusion" "--lora-dir", "/models/lora/models", "--hypernetwork-dir", "/models/hypernetworks", "--embedding-dir", "/models/embeddings", "--vae-dir", "/models/vae", "--controlnet-dir", "/models/controlnet"]

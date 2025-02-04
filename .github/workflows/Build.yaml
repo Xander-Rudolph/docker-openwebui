@@ -35,6 +35,7 @@ jobs:
     uses: xander-rudolph/.github/.github/workflows/docker-bake.yml@test
     with:
       gitversion: "gitversion.yml"
+      targets: default # searxng + sd ext
+      # targets: base
       trigger_release: true
-      targets: base
       # trigger_release: ${{ github.ref_name == 'main' }}

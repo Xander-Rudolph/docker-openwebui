@@ -13,7 +13,7 @@ variable "SEARXNG_IMAGE_NAME" {
 }
 
 group "default" {
-  targets = ["multi-tagged","searxng"]
+  targets = ["ext-tagged","searxng"]
 }
 
 target "base" {
@@ -34,6 +34,14 @@ target "ext-tagged" {
   }
 }
 
+target "private-tagged" {
+  inherits = ["base"]
+  tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:private"]
+  args     = {
+    privatemodels = "true"
+  }
+}
+
 target "mdl-tagged" {
   inherits = ["base"]
   tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:mdl"]
@@ -45,6 +53,11 @@ target "mdl-tagged" {
 target "multi-tagged" {
   inherits = ["ext-tagged","mdl-tagged"]
   tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:ext-mdl"]
+}
+
+target "complete-tagged" {
+  inherits = ["ext-tagged","mdl-tagged","private-tagged"]
+  tags     = ["${REPO_NAME}/${SD_IMAGE_NAME}:complete"]
 }
 
 target "searxng" {
