@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu20.04
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu20.04
 
 # Maintainer Information
 LABEL org.opencontainers.image.authors="Xander-Rudolph"
@@ -9,7 +9,8 @@ LABEL org.opencontainers.image.title="CUDA-enabled stable diffusion"
 LABEL org.opencontainers.image.description="Image for running stable diffusion with GPU support"
 LABEL org.opencontainers.image.usage="This image is intended for using and enabling stable diffusion inside of open-webui."
 LABEL org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-LABEL org.opencontainers.image.base="nvidia/cuda:12.6.3-cudnn-runtime-ubuntu20.04"
+# LABEL org.opencontainers.image.base="nvidia/cuda:12.6.3-cudnn-runtime-ubuntu20.04"
+LABEL org.opencontainers.image.base="nvidia/cuda:12.8.0-cudnn-runtime-ubuntu20.04"
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
