@@ -21,6 +21,8 @@ jobs:
   review:
     if: ${{ github.event_name == 'pull_request' }}
     uses: xander-rudolph/.github/.github/workflows/ollama-pr.yml@main
+    with:
+      model: deepseek-r1
     
   scan:
     if: ${{ github.event_name == 'pull_request' }}
