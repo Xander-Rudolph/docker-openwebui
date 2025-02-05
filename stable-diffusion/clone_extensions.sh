@@ -10,7 +10,11 @@ if [ "$1" = "true" ]; then
     git clone https://github.com/Vetchems/sd-civitai-browser extensions/sd-civitai-browser
     git clone https://github.com/kohya-ss/sd-webui-additional-networks extensions/sd-webui-additional-networks
     git clone https://github.com/Mikubill/sd-webui-controlnet extensions/sd-webui-controlnet
+    # Added to resolve ControlNet init warning
+    pip install --no-cache-dir insightface
     git clone https://github.com/camenduru/openpose-editor extensions/openpose-editor
+    # Resolve dependency on extensions/openpose-editor/scripts/main.py
+    pip install --no-cache-dir basicsr
     git clone https://github.com/jexom/sd-webui-depth-lib extensions/sd-webui-depth-lib
     git clone https://github.com/hnmr293/posex extensions/posex
     git clone https://github.com/camenduru/sd-webui-tunnels extensions/sd-webui-tunnels

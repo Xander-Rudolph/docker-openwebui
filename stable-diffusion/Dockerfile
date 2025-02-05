@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     build-essential \
     curl \
+    gosu \
     libgl1 \
     && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 \
     && apt-get clean \
@@ -46,22 +47,25 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 # Install PyTorch with CUDA support
 RUN pip3 install --no-cache-dir torch==2.1.2 torchvision==0.16.2 --extra-index-url https://download.pytorch.org/whl/cu121
 
-# Added to resolve ControlNet init warning
-RUN pip3 install --no-cache-dir insightface
-
-# Resolve dependency on extensions/openpose-editor/scripts/main.py
-RUN pip3 install --no-cache-dir basicsr
-
-# make mounting dirs
-RUN mkdir -p /models /outputs && \
-    chmod -R 777 /models && \
-    chmod -R 777 /outputs
-
 # set working process
 WORKDIR /data
 
-# Add minimum reqiuirements to make it work
-RUN git clone https://github.com/Stability-AI/stablediffusion.git repositories/stable-diffusion-stability-ai
+# Create a non-root user and add them to root for python module access
+RUN useradd -m -u 1000 sduser && \
+    usermod -a -G root sduser
+
+# This section below addresses mounting issues with the model/output volumes
+RUN mkdir -p /data/models /data/outputs && \
+    ln -s /data/models /models && \
+    ln -s /data/outputs /outputs && \
+    chown -R sduser:sduser /models /outputs /data && \
+    chmod -R 755 /models /outputs /data
+
+# Switch to user profile from here on out
+USER sduser
+
+# Install Requirements 
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Define build-time arguments
 ARG addextensions=false
@@ -73,10 +77,6 @@ ENV ADD_EXTENSIONS=${addextensions}
 ENV ADD_MODELS=${addmodels}
 ENV ADD_MODELS=${privatemodels}
 
-# Copy scripts for conditional execution
-# ADD --chmod=755 ./clone_extensions.sh ./clone_extensions.sh
-# ADD --chmod=755 ./download_models.sh ./download_models.sh
-# ADD --chmod=755 ./private_models.sh ./private_models.sh
 # Copy all scripts in for exec
 ADD --chmod=755 ./*.sh .
 
@@ -88,7 +88,6 @@ RUN ./clone_extensions.sh $ADD_EXTENSIONS && \
 # Expose the default port for the WebUI
 EXPOSE 7860
 
-# Command to start the WebUI with NVIDIA GPU acceleration, and skip torch CUDA test, as well as enables API calls for open-webui
-# https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/82a973c04367123ae98bd9abdf80d9eda9b910e2/modules/cmd_args.py#L26
-# ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api"]
-ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api", "--ckpt-dir", "/models/sd-ckpt"]
+# Other args https://github.com/AUTOMATIC1111/stable-diffusion-webui/blob/82a973c04367123ae98bd9abdf80d9eda9b910e2/modules/cmd_args.py#L26
+ENTRYPOINT ["python3", "launch.py", "--listen", "--port", "7860", "--skip-torch-cuda-test", "--xformers", "--cors-allow-origins=*", "--api"]
+ 

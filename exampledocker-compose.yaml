@@ -4,19 +4,17 @@ services:
       - NVIDIA
     # ------ Image names ---------
     # If you want to run a build instead of pulling the image:
-    # build:
-    #   context: ./stable-diffusion
-    #   dockerfile: Dockerfile
-    #   args:
-    #     addextensions: "true"  # Control whether extensions are cloned
-    #     addmodels: "true"       # Control whether models are downloaded
-    #     privatemodels: "true"       # Control whether models are downloaded from HF with a token
-    # image: local/stable-diffusion
+    build:
+      context: ./stable-diffusion
+      dockerfile: Dockerfile
+      args:
+        addextensions: "true"  # Control whether extensions are cloned
+        addmodels: "true"       # Control whether models are downloaded
+        privatemodels: "true"       # Control whether models are downloaded from HF with a token
+    image: local/stable-diffusion
     # OR so you don't have to build
-    image: ghcr.io/xander-rudolph/stable-diffusion:latest
-    # image: ghcr.io/xander-rudolph/stable-diffusion:ext-mdl
+    # image: ghcr.io/xander-rudolph/stable-diffusion:latest # ext and latest are the only auto builds; mdl, ext-mdl, and complete bomb out the runners
     pull_policy: always # this ensures that even when using latest/ext-mdl, the latest image will get pulled
-    # ------ Image names ---------
     container_name: ${SD_HOST:-stable-diffusion}
     environment:
       - HF_TOKEN=${HF_TOKEN}
@@ -28,7 +26,11 @@ services:
         max-size: "5m"
         max-file: "2"  
     volumes:
-      - sd_models:/models:rw
+      - sd_ckpt_models:/models/Stable-diffusion:rw # <-- case sensitive so be careful
+      - sd_lora_models:/models/Lora:rw # <-- case sensitive so be careful
+      # you can keep going with these if you use any of the other models
+      # - sd_vae_models:/models/VAE:rw
+      # - sd_hypernetwork_models:/models/hypernetworks:rw
       - sd_output:/outputs:rw
     deploy:
       resources:
@@ -227,12 +229,31 @@ volumes:
       type: none
       o: bind
       device: "${SEARCH_DIR}"
-  sd_models:
+  sd_ckpt_models:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: "${SD_MODELS_DIR}"
+      device: "${SD_CKPT_MODELS_DIR}"
+  sd_lora_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_LORA_MODELS_DIR}"
+  # you can keep going with these if you use any of the other models
+  # sd_vae_models:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: "${SD_VAE_MODELS_DIR}"
+  # sd_hypernetwork_models:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: "${SD_HYPERNETWORK_MODELS_DIR}"
   sd_output:
     driver: local
     driver_opts:
