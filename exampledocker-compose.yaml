@@ -1,0 +1,286 @@
+services:
+  stable-diffusion:
+    profiles:
+      - NVIDIA
+    # ------ Image names ---------
+    # If you want to run a build instead of pulling the image:
+    build:
+      context: ./stable-diffusion
+      dockerfile: Dockerfile
+      args:
+        addextensions: "true"  # Control whether extensions are cloned
+        addmodels: "true"       # Control whether models are downloaded
+        privatemodels: "true"       # Control whether models are downloaded from HF with a token
+    image: local/stable-diffusion
+    # OR so you don't have to build
+    # image: ghcr.io/xander-rudolph/stable-diffusion:latest # ext and latest are the only auto builds; mdl, ext-mdl, and complete bomb out the runners
+    pull_policy: always # this ensures that even when using latest/ext-mdl, the latest image will get pulled
+    container_name: ${SD_HOST:-stable-diffusion}
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    ports:
+      - "${SD_WEBUI_PORT}:7860"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"  
+    volumes:
+      - sd_ckpt_models:/models/Stable-diffusion:rw # <-- case sensitive so be careful
+      - sd_lora_models:/models/Lora:rw # <-- case sensitive so be careful
+      # you can keep going with these if you use any of the other models
+      # - sd_vae_models:/models/VAE:rw
+      # - sd_hypernetwork_models:/models/hypernetworks:rw
+      - sd_output:/outputs:rw
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ollama-nvid:
+    profiles:
+      - NVIDIA
+    image: ollama/ollama
+    pull_policy: always
+    container_name: ${OLLAMA_HOST:-ollama}
+    volumes:
+      - ollama_data:/root/.ollama/models:rw
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+      - CUDA_VISIBLE_DEVICES=0
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ollama-rocm:
+    profiles:
+      - AMD
+    image: ollama/ollama:rocm
+    pull_policy: always
+    container_name: ${OLLAMA_HOST:-ollama}
+    volumes:
+      - ollama_data:/root/.ollama/models:rw
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    devices:
+      - /dev/kfd
+      - /dev/dri
+
+  open-webui:
+    profiles:
+      - AMD
+      - NVIDIA
+      - default
+    image: ghcr.io/open-webui/open-webui:main
+    pull_policy: always
+    # TODO: there has to be a way to do this so I can swap the default model and load it...
+    # command: sh -c 'curl -X POST http://${OLLAMA_HOST:-ollama}:${OLLAMA_PORT:-11434}/api/pull -d "{\"name\": \"deepseek-r1\"}"'
+    container_name: ${OWUI_HOST:-open-webui}
+    ports:
+      - "${OPEN_WEBUI_PORT}:8080"
+    environment:
+      - AUTOMATIC1111_BASE_URL=http://${SD_HOST:-stable-diffusion}:${SD_WEBUI_PORT}/
+      - ENABLE_IMAGE_GENERATION=True
+      - IMAGE_GENERATION_ENGINE=automatic1111
+      - AUTOMATIC1111_API_AUTH=
+      - AUTOMATIC1111_CFG_SCALE=7.0
+      - AUTOMATIC1111_SAMPLER=DPM++ 2M
+      - AUTOMATIC1111_SCHEDULER=Automatic
+      - IMAGE_GENERATION_MODEL=v1-5-pruned-emaonly.safetensors [6ce0161689]
+      - AUDIO_TTS_ENGINE=openai
+      - AUDIO_TTS_MODEL=tts-1-hd
+      - AUDIO_TTS_VOICE=echo # alloy, echo, fable, nova, onyx, shimmer
+      - AUDIO_TTS_SPLIT_ON=punctuation
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://${TTS_HOST:-tts}:${TTS_PORT:-8000}/v1
+      - AUDIO_TTS_OPENAI_API_KEY="${TTS_PORT:-8000}${TTS_HOST:-tts}"
+      - OLLAMA_BASE_URL=http://${OLLAMA_HOST:-ollama}:${OLLAMA_PORT:-11434}
+      - ENABLE_RAG_WEB_SEARCH=${ENABLE_RAG_WEB_SEARCH:-True}
+      - RAG_WEB_SEARCH_ENGINE=${RAG_WEB_SEARCH_ENGINE:-searxng}
+      - RAG_WEB_SEARCH_RESULT_COUNT=${RAG_WEB_SEARCH_RESULT_COUNT:-3}
+      - RAG_WEB_SEARCH_CONCURRENT_REQUESTS=${RAG_WEB_SEARCH_CONCURRENT_REQUESTS:-30}
+      - SEARXNG_QUERY_URL=http://${SEARXNG_HOSTNAME:-searxng}:${SEARXNG_PORT:-8080}/search?q=<query>&format=json
+      # https://docs.openwebui.com/features/sso/#microsoft
+      - ENABLE_OAUTH_SIGNUP=${ENABLE_OAUTH_SIGNUP:-false}
+      - OAUTH_MERGE_ACCOUNTS_BY_EMAIL=${OAUTH_MERGE_ACCOUNTS_BY_EMAIL:-false}
+      - DEFAULT_ROLE_ON_SIGNUP=${DEFAULT_ROLE_ON_SIGNUP:-user}
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET}
+      - MICROSOFT_CLIENT_TENANT_ID=${MICROSOFT_CLIENT_TENANT_ID:-9188040d-6c67-4c5b-b112-36a304b66dad} # default tenant for personal accounts
+    volumes:
+      - owui_data:/app/backend/data:rw
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  searxng:
+    profiles:
+      - AMD
+      - NVIDIA
+      - default
+    container_name: ${SEARXNG_HOST:-searxng}
+    # # If you want to run a build instead of pulling the image:
+    # build:
+    #   context: ./searxng
+    #   dockerfile: Dockerfile
+    # Base image with unmodified settings.xml which fails due to lack of accept json
+    #  Otherwise the requests will get rejected for queries to the pod... raised and rejected: https://github.com/searxng/searxng/issues/4273
+    # formats:
+    # - html
+    # - json <--
+    image: searxng/searxng:latest
+    pull_policy: always
+    # OR #TODO: get this to actually work...
+    # image: ghcr.io/xander-rudolph/searxng:latest
+    # additionally the wrong port is mapped by default so make sure you use 8080
+    # https://github.com/searxng/searxng/issues/4274
+    ports:
+      - "${SEARXNG_PORT:-8080}:8080"  
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    volumes:
+      - search:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
+      - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
+      - TRUSTED_NETWORKS="10.0.0.0/8,192.168.0.0/16,127.0.0.1/8,172.16.0.0/14" # allow calls from most A and C networks as well as docker networks (172.16.0.0/14 → Covers 172.16.0.0 - 172.19.255.255)
+      - SEARXNG_DEBUG=true
+      - SEARXNG_API__ENABLED=true
+      - SEARXNG_API__REQUIRE_API_KEY=false
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+
+  tts-nvid:
+    container_name: ${TTS_HOST:-tts}
+    profiles:
+      - NVIDIA
+    image: ghcr.io/matatonic/openedai-speech
+    pull_policy: always
+    environment:
+      API_KEY: "${TTS_PORT:-8000}${TTS_HOST:-tts}"
+    ports:
+      - "${TTS_PORT-8000}:8000"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"      
+    volumes:
+      - voices:/app/voices:rw
+      - tts_config:/app/config:rw
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  tts-rocm:
+    profiles:
+      - AMD
+    container_name: ${TTS_HOST:-tts}
+    image: ghcr.io/matatonic/openedai-speech:rocm
+    pull_policy: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    ports:
+      - "${TTS_PORT:-8000}:8000"
+    volumes:
+      - voices:/app/voices:rw
+      - tts_config:/app/config:rw
+    devices:
+      - /dev/kfd
+      - /dev/dri
+
+volumes:
+  search:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SEARCH_DIR}"
+  sd_ckpt_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_CKPT_MODELS_DIR}"
+  sd_lora_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_LORA_MODELS_DIR}"
+  # you can keep going with these if you use any of the other models
+  # sd_vae_models:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: "${SD_VAE_MODELS_DIR}"
+  # sd_hypernetwork_models:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: "${SD_HYPERNETWORK_MODELS_DIR}"
+  sd_output:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${SD_OUTPUT_DIR}"
+  ollama_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${LAMA_DATA_DIR}"
+  owui_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${OWUI_DATA_DIR}"
+  voices:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${VOICES_DIR}"
+  tts_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${TTS_CONFIG_DIR}"
