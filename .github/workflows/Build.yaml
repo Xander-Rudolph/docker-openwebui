@@ -38,9 +38,10 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Run Trivy Scan
+      - name: Update Readme.md
         uses: Xander-Rudolph/auto-readme@main
-        # with:
+        with:
+          working_dir: stable-diffusion
                 
   scan:
     if: ${{ github.event_name == 'pull_request' }}
