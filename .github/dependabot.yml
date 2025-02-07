@@ -13,6 +13,19 @@ updates:
       - "dependencies"
       - "docker"
 
+  - package-ecosystem: "docker"
+    directory: "/searxng"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    rebase-strategy: "auto"
+    labels:
+      - "dependencies"
+      - "docker"
+
   - package-ecosystem: "github-actions"
     directory: ".github/workflows"
     schedule:

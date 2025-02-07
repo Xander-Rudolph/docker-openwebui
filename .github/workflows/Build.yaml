@@ -77,4 +77,5 @@ jobs:
     with:
       gitversion: "gitversion.yml"
       targets: default # searxng + sd ext
-      trigger_release: ${{ github.ref_name == 'main' }}
+      trigger_release: true
+      # trigger_release: ${{ github.ref_name == 'main' }}
