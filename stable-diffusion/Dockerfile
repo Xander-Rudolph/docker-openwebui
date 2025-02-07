@@ -87,7 +87,7 @@ ENV ADD_MODELS=${addmodels}
 ENV ADD_MODELS=${privatemodels}
 
 # Copy all scripts in for exec
-ADD --chown=sduser:sduser ./*.sh .
+COPY --chmod=777 --chown=sduser:sduser ./*.sh .
 
 # Run conditional scripts
 RUN ./clone_extensions.sh $ADD_EXTENSIONS 

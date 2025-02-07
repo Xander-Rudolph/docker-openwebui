@@ -1,23 +1,4 @@
 services:
-  #TODO: reverse proxy and networks
-  # https://github.com/NginxProxyManager/nginx-proxy-manager?tab=readme-ov-file#quick-setup
-  # nginx:
-  #   image: 'docker.io/jc21/nginx-proxy-manager:latest'
-  #   pull_policy: always
-  #   container_name: ${NGINX_HOST:-nginxproxymanager}
-  #   logging:
-  #     driver: json-file
-  #     options:
-  #       max-size: "5m"
-  #       max-file: "2"  
-  #   ports:
-  #     - "${NGINX_ROOT_PORT:-80}:80"
-  #     - "${NGINX_SECONDARY_PORT:-81}:81"
-  #     - "${NGINX_SECURE_PORT:-443}:443"
-  #   volumes:
-  #     - nginx_data:/data
-  #     - letsencrypt:/etc/letsencrypt
-
   stable-diffusion:
     profiles:
       - NVIDIA
@@ -67,11 +48,14 @@ services:
     image: ollama/ollama
     pull_policy: always
     container_name: ${OLLAMA_HOST:-ollama}
-    volumes:
-      - ollama_data:/root/.ollama/models:rw
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama/models:rw
+      - ./ollama/entrypoint.sh:/entrypoint.sh:z
+    entrypoint: ["/entrypoint.sh"]
     environment:
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-deepseek-r1:1.5b}
       - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
       - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
       - CUDA_VISIBLE_DEVICES=0
@@ -94,10 +78,14 @@ services:
     image: ollama/ollama:rocm
     pull_policy: always
     container_name: ${OLLAMA_HOST:-ollama}
-    volumes:
-      - ollama_data:/root/.ollama/models:rw
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama/models:rw
+      - ./ollama/entrypoint.sh:/entrypoint.sh:z
+    entrypoint: ["/entrypoint.sh"]
+    environment:
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-deepseek-r1:1.5b}
     logging:
       driver: json-file
       options:
@@ -130,8 +118,6 @@ services:
       - default
     image: ghcr.io/open-webui/open-webui:main
     pull_policy: always
-    # TODO: there has to be a way to do this so I can swap the default model and load it...
-    # command: sh -c 'curl -X POST http://${OLLAMA_HOST:-ollama}:${OLLAMA_PORT:-11434}/api/pull -d "{\"name\": \"deepseek-r1\"}"'
     container_name: ${OWUI_HOST:-open-webui}
     ports:
       - "${OPEN_WEBUI_PORT}:8080"
