@@ -45,7 +45,7 @@ jobs:
                 
   scan:
     if: ${{ github.event_name == 'pull_request' }}
-    name: Trivy Scan Analysis
+    name: Code scanning
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
