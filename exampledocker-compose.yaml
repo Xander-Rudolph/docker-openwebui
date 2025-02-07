@@ -1,4 +1,23 @@
 services:
+  #TODO: reverse proxy and networks
+  # https://github.com/NginxProxyManager/nginx-proxy-manager?tab=readme-ov-file#quick-setup
+  # nginx:
+  #   image: 'docker.io/jc21/nginx-proxy-manager:latest'
+  #   pull_policy: always
+  #   container_name: ${NGINX_HOST:-nginxproxymanager}
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "5m"
+  #       max-file: "2"  
+  #   ports:
+  #     - "${NGINX_ROOT_PORT:-80}:80"
+  #     - "${NGINX_SECONDARY_PORT:-81}:81"
+  #     - "${NGINX_SECURE_PORT:-443}:443"
+  #   volumes:
+  #     - nginx_data:/data
+  #     - letsencrypt:/etc/letsencrypt
+
   stable-diffusion:
     profiles:
       - NVIDIA
@@ -26,12 +45,14 @@ services:
         max-size: "5m"
         max-file: "2"  
     volumes:
-      - sd_ckpt_models:/models/Stable-diffusion:rw # <-- case sensitive so be careful
-      - sd_lora_models:/models/Lora:rw # <-- case sensitive so be careful
+      - sd_ckpt_models:/data/models/Stable-diffusion:rw # <-- case sensitive
+      - sd_lora_models:/data/models/Lora:rw # <-- case sensitive
       # you can keep going with these if you use any of the other models
+      # but if you do, ensure you update the dockerfile to create the directories so they can have their ownership changed
+      # if you don't, permissions wont pass through and the models wont load
       # - sd_vae_models:/models/VAE:rw
       # - sd_hypernetwork_models:/models/hypernetworks:rw
-      - sd_output:/outputs:rw
+      - sd_output:/outputs:rw # this uses a symlink because the app needs to create dirs... I think
     deploy:
       resources:
         reservations:
@@ -86,6 +107,22 @@ services:
       - /dev/kfd
       - /dev/dri
 
+  ollama-cpu:
+    profiles:
+      - default
+    image: ollama/ollama:latest
+    pull_policy: always
+    container_name: ${OLLAMA_HOST:-ollama}
+    volumes:
+      - ollama_data:/root/.ollama/models:rw
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
   open-webui:
     profiles:
       - AMD
@@ -101,12 +138,12 @@ services:
     environment:
       - AUTOMATIC1111_BASE_URL=http://${SD_HOST:-stable-diffusion}:${SD_WEBUI_PORT}/
       - ENABLE_IMAGE_GENERATION=True
-      - IMAGE_GENERATION_ENGINE=automatic1111
-      - AUTOMATIC1111_API_AUTH=
-      - AUTOMATIC1111_CFG_SCALE=7.0
-      - AUTOMATIC1111_SAMPLER=DPM++ 2M
-      - AUTOMATIC1111_SCHEDULER=Automatic
-      - IMAGE_GENERATION_MODEL=v1-5-pruned-emaonly.safetensors [6ce0161689]
+      - IMAGE_GENERATION_ENGINE=${IMAGE_GENERATION_ENGINE:-automatic1111}
+      - AUTOMATIC1111_API_AUTH=${AUTOMATIC1111_API_AUTH:-}
+      - AUTOMATIC1111_CFG_SCALE=${AUTOMATIC1111_CFG_SCALE:-7.0}
+      - AUTOMATIC1111_SAMPLER=${AUTOMATIC1111_SAMPLER:-DPM++ 2M}
+      - AUTOMATIC1111_SCHEDULER=${AUTOMATIC1111_SCHEDULER:-Automatic}
+      - IMAGE_GENERATION_MODEL=${IMAGE_GENERATION_MODEL:-v1-5-pruned-emaonly.safetensors [6ce0161689]}
       - AUDIO_TTS_ENGINE=openai
       - AUDIO_TTS_MODEL=tts-1-hd
       - AUDIO_TTS_VOICE=echo # alloy, echo, fable, nova, onyx, shimmer
@@ -284,3 +321,15 @@ volumes:
       type: none
       o: bind
       device: "${TTS_CONFIG_DIR}"
+  nginx_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${NGINX_DATA_DIR}"
+  letsencrypt:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "${LE_DATA_DIR}"
