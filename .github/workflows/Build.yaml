@@ -23,25 +23,27 @@ jobs:
     uses: xander-rudolph/.github/.github/workflows/ollama-pr.yml@main
     with:
       model: deepseek-r1
-      
-  update-readme:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    services:
-      ollama:
-        image: ollama/ollama:latest
-        ports:
-          - 11434:11434
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    
+  # TODO: finish the readme stuff
+  # update-readme:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     pull-requests: write
+  #   services:
+  #     ollama:
+  #       image: ollama/ollama:latest
+  #       ports:
+  #         - 11434:11434
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
           
-      - name: Update Readme.md
-        uses: Xander-Rudolph/auto-readme@main
-        with:
-          working_dir: stable-diffusion
+  #     - name: Update Readme.md
+  #       uses: Xander-Rudolph/auto-readme@main
+  #       with:
+  #         model: deepseek-r1
+  #         working_dir: stable-diffusion
                 
   scan:
     if: ${{ github.event_name == 'pull_request' }}
@@ -67,12 +69,8 @@ jobs:
 
   docker-build:
     if: ${{ github.event_name != 'pull_request' }}
-    # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@debug
-    # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
-    uses: xander-rudolph/.github/.github/workflows/docker-bake.yml@test
+    uses: xander-rudolph/.github/.github/workflows/docker-bake.yml@main
     with:
       gitversion: "gitversion.yml"
       targets: default # searxng + sd ext
-      # targets: base
-      trigger_release: true
-      # trigger_release: ${{ github.ref_name == 'main' }}
+      trigger_release: ${{ github.ref_name == 'main' }}
