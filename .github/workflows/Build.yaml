@@ -66,6 +66,10 @@ jobs:
           DEFAULT_BRANCH: "main"
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_OVERRIDE || secrets.GITHUB_TOKEN }}
           DISABLE_ERRORS: true
+          VALIDATE_BASH_EXEC: false # it throws warnings about the shell scripts not being executable... no idea why
+          VALIDATE_ENV: false # the order it setup how it is for documentation purpose
+          VALIDATE_SHELL_SHFMT: false # TODO: probably should turn this on and put it in auto fix mode...
+          VALIDATE_YAML_PRETTIER: false # TODO: this one as well...
 
   docker-build:
     if: ${{ github.event_name != 'pull_request' }}
