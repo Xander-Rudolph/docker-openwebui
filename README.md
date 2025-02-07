@@ -120,10 +120,12 @@ sequenceDiagram
 Contributions are always welcome! If you would like to contribute, please fork this repository, make your changes, and submit a pull request.
 
 ## What still needs to be done:
-- [X] Update openweb for TTS
-- [ ] Wire TTS to openwebui
 - [ ] Update openweb for STT (right now its usuing built in whisper)
-- [ ] Update openweb for image generation (outputs are screwed up)
+- [ ] Allow model preload SD
+- [ ] Allow model preload Ollama
+- [ ] Research Gen Video models
+- [X] Update openweb for TTS
+- [X] Wire TTS to openwebui
+- [X] Update openweb for image generation (outputs are screwed up)
 - [X] pass openweb default image params that match SD
 - [X] test docker bake file... this kinda only works locally... github pipelines run out of space: ![Out of space](./resources/GH_RUNNER_SADNESS.png)
-- [ ] Research Gen Video models
