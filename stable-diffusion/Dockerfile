@@ -34,7 +34,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     gosu \ 
-    inotify-tools \
     libgl1 \
     && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 \
     && apt-get clean \
