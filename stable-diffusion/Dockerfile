@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu20.04
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu20.04
 
 # Maintainer Information
 LABEL org.opencontainers.image.authors="Xander-Rudolph"
