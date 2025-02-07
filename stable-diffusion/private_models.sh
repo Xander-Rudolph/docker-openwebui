@@ -7,7 +7,7 @@ if [ "$1" = "true" ]; then
         echo "Downloading models..."
 
         base_url="https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main"
-        dest_dir="/models/stable-diffusion" # Checkpoints directory
+        dest_dir="/data/models/Stable-diffusion" # Checkpoints directory
 
         declare -A files=(
             ["flux1-dev.safetensors"]="$base_url/flux1-dev.safetensors"

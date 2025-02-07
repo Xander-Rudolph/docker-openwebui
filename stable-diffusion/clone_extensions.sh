@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/bin/sh
+
 if [ "$1" = "true" ]; then
-    echo "Grabbing run_n_times.py...\nIt appears to load modules but not sure if I need it yet...\nSee https://github.com/camenduru/stable-diffusion-webui-docker/blob/2a51924c744dc7a5e452b3996f9c40ab20a3683c/Dockerfile.Stable#L23C1-L23C167"
+    # This appears to load modules but not sure if I need it yet... See https://github.com/camenduru/stable-diffusion-webui-docker/blob/2a51924c744dc7a5e452b3996f9c40ab20a3683c/Dockerfile.Stable#L23C1-L23C167"
     curl -L -o scripts/run_n_times.py https://raw.githubusercontent.com/camenduru/stable-diffusion-webui-scripts/main/run_n_times.py
 
     echo "Cloning WebUI extensions..."

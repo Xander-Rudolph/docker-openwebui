@@ -19,4 +19,6 @@ LABEL org.opencontainers.image.base="searxng/searxng:latest"
 
 EXPOSE 8080
 
+USER user
+
 CMD ["python3", "-m", "searxng"]

@@ -24,9 +24,30 @@ jobs:
     with:
       model: deepseek-r1
     
+  # TODO: finish the readme stuff
+  # update-readme:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     pull-requests: write
+  #   services:
+  #     ollama:
+  #       image: ollama/ollama:latest
+  #       ports:
+  #         - 11434:11434
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+          
+  #     - name: Update Readme.md
+  #       uses: Xander-Rudolph/auto-readme@main
+  #       with:
+  #         model: deepseek-r1
+  #         working_dir: stable-diffusion
+                
   scan:
     if: ${{ github.event_name == 'pull_request' }}
-    name: Trivy Scan Analysis
+    name: Code scanning
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,15 +66,15 @@ jobs:
           DEFAULT_BRANCH: "main"
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_OVERRIDE || secrets.GITHUB_TOKEN }}
           DISABLE_ERRORS: true
+          VALIDATE_BASH_EXEC: false # it throws warnings about the shell scripts not being executable... no idea why
+          VALIDATE_ENV: false # the order it setup how it is for documentation purpose
+          VALIDATE_SHELL_SHFMT: false # TODO: probably should turn this on and put it in auto fix mode...
+          VALIDATE_YAML_PRETTIER: false # TODO: this one as well...
 
   docker-build:
     if: ${{ github.event_name != 'pull_request' }}
-    # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@debug
-    # uses: xander-rudolph/.github/.github/workflows/docker-publish.yml@main
-    uses: xander-rudolph/.github/.github/workflows/docker-bake.yml@test
+    uses: xander-rudolph/.github/.github/workflows/docker-bake.yml@main
     with:
       gitversion: "gitversion.yml"
       targets: default # searxng + sd ext
-      # targets: base
-      trigger_release: true
-      # trigger_release: ${{ github.ref_name == 'main' }}
+      trigger_release: ${{ github.ref_name == 'main' }}
